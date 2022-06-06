@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="10.1.1" />
+    <PackageReference Include="Twilio" Version="5.61.0" />
+    <PackageReference Include="Xero.NetStandard.OAuth2" Version="3.16.1" />
+    <PackageReference Include="Xero.NetStandard.OAuth2Client" Version="1.3.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Store.DAL\Store.DAL.csproj" />
+    <ProjectReference Include="..\Store.DTO\Store.DTO.csproj" />
+    <ProjectReference Include="..\Store.Tables\Store.Tables.csproj" />
+  </ItemGroup>
+
+</Project>

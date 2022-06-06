@@ -1,0 +1,205 @@
+﻿<script>
+        $(document).ready(function () {
+            console.log('LoadTable');
+            LoadTable();
+        })
+        function LoadTable() {
+            dt = $('#table').DataTable({ "columnDefs": [{ "defaultContent": "-", "targets": "_all" }],
+
+                pageLength: 20,
+                pagijngType: "full_numbers",
+                serverSide: true,
+                processing: true,
+                lengthMenu: [ 10, 25, 50, 75, 100 ],
+                sAjaxSource: '@Url.GetAction("LoadDataTable")',
+                sServerMethod: "POST",
+                bPaginate: true,
+                paging: true,
+                dom: 'Blfrtip',
+                columnDefs: [
+                    {
+                        className: "editable text", targets: [2, 3],
+                        
+
+                    },
+                    {
+                        className: "Seq_Id", targets: [0],
+
+
+                    }
+                ],
+                columns: [
+
+
+
+
+
+                    {
+                        data: null,
+
+                        bSortable: false,
+                        render: function (data, type, row) { return '<label name="Seq_Id">' + (data.seq_Id ?? "") + '</label>' }
+
+                    },
+                    {
+                        data: null,
+                        bSortable: false,
+                       
+                        render: function (data, type, row) { return '<label name="Product_Category_Code">' + (data.product_Category_Code ?? "") + '</label>' }
+
+                    },
+                    {
+                        data: null,
+                        bSortable: false,
+                        render: function (data, type, row) { return '<label name="Category_Name" >' + (data.category_Name ?? "") + '</label>' }
+
+                    },
+                    {
+                        data: null,
+                        bSortable: false,
+                        render: function (data, type, row) { return '<label name="Category_Description">' + (data.category_Description ?? "") + '</label>' }
+
+                    },
+                    {
+                        data: null,
+                        bSortable: false,
+                        render: function (data, type, row) { return '<label >' + (data.create_Date ?? "") + '</label>' }
+
+                    },
+                    {
+                        data: null,
+                        bSortable: false,
+                        render: function (data, type, row) { return '<label>' + (data.update_Date ?? "") + '</label>' }
+
+                    },
+
+
+                    {
+
+                        data: null,
+                        bSortable: false,
+                        render: function (data, type, row) {
+                            let btn = '<div class="d-flex">';
+                            btn += createButton('edit', data.seq_Id);
+
+                            btn += createButton('delete', data.seq_Id);
+
+                            return btn;
+
+                        }
+                    }
+                ]
+            });
+
+
+        }
+    function createButton(buttonType, rowID) {
+        var buttonText = buttonType == "edit" ? "Edit" : "Delete";
+        return '<button class="' + buttonType + '" type="button">' + buttonText + '</button>';
+
+    }
+    $('#table').on('click', 'tbody td .edit', function (e) {
+        fnResetControls();
+        var dataTable = $('#table').DataTable();
+        var clickedRow = $($(this).closest('td')).closest('tr');
+        $(clickedRow).find('td').each(function () {
+            // do your cool stuff
+            if ($(this).hasClass('editable')) {
+                if ($(this).hasClass('text')) {
+                    var html = fnCreateTextBox($(this).text(), $(this).children().first().attr('name'));
+                    $(this).html($(html))
+                }
+            }
+        });
+
+
+        $('#table tbody tr td .update').removeClass('update').addClass('edit').html('Edit');
+        $('#table tbody tr td .cancel').removeClass('cancel').addClass('delete').html('Delete');
+        $(clickedRow).find('td .edit').removeClass('edit').addClass('update').html('Update');
+        $(clickedRow).find('td .delete').removeClass('delete').addClass('cancel').html('Cancel');
+        $(clickedRow).append(fnCreateTextBox($(clickedRow).find('label[name="Seq_Id"]').text(), 'Seq_Id'));
+    });
+
+    function fnCreateTextBox(value, fieldprop) {
+
+        if (fieldprop =='Seq_Id') {
+            return '<input style="display:none;"  data-field="' + fieldprop + '" type="text" value="' + value + '" ></input>';
+
+        }
+        return '<input  data-field="' + fieldprop + '" type="text" value="' + value + '" ></input>';
+    }
+
+    $('#table').on('click', 'tbody td .cancel', function (e) {
+        fnResetControls();
+        $('#table tbody tr td .update').removeClass('update').addClass('edit').html('Edit');
+        $('#table tbody tr td .cancel').removeClass('cancel').addClass('delete').html('Delete');
+    });
+
+
+    function fnResetControls() {
+        var openedTextBox = $('#table').find('input');
+        $.each(openedTextBox, function (k, $cell) {
+            $(openedTextBox[k]).closest('td').html($cell.value);
+        })
+    }
+
+    $('#table').on('click', 'tbody td .update', function (e) {
+
+        var openedTextBox = $('#table').find('input');
+
+
+        var obj = new Object();
+        $.each(openedTextBox, function (k, $cell) {
+            var input = $($cell);
+            obj[input.attr('data-field')] = input.val();
+        })
+        Update(obj);
+    });
+
+    function fnUpdateDataTableValue($inputCell, value) {
+        var dataTable = $('#table').DataTable();
+        var rowIndex = dataTable.row($($inputCell).closest('tr')).index();
+        var fieldName = $($inputCell).attr('data-field');
+        dataTable.rows().data()[rowIndex][fieldName] = value;
+    }
+    function Update(obj) {
+
+        alertify.confirm().setting('modal', false);
+
+        alertify.confirm('Are you sure about the operation?', '', function () {
+
+            $.post('@Url.GetAction("Update")', obj, function (res) {
+
+                if (res.status) {
+                    alertify.success(res.message);
+                    var openedTextBox = $('#table').find('input');
+
+                    $.each(openedTextBox, function (k, $cell) {
+                        fnUpdateDataTableValue($cell, $cell.value);
+                        var input = $($cell);
+                        obj[input.attr('data-field')] = input.val();
+                        $(openedTextBox[k]).closest('td').html($cell.value);
+                    })
+
+
+                }
+                else {
+                    alertify.alert(res.message).setHeader('Stop');
+
+                }
+                $('#table tbody tr td .update').removeClass('update').addClass('edit').html('Edit');
+                $('#table tbody tr td .cancel').removeClass('cancel').addClass('delete').html('Delete');
+
+
+
+
+
+            });
+
+        },
+
+            function () { }
+        ).set('labels', { ok: 'Yes', cancel: 'No' });
+    }
+
+</script>
